@@ -16,45 +16,69 @@ def transition_matrix(data, order):
         cur_state.append('')
 
     # Feed data into matrix
-    # format: {(a,b,c): {'b': 0.4, 'a': 0.6}}
-    for state_new in data:
+    # format: {(a,b,c): {'b': 48, 'a': 69}}
+    # "new_substate" is actually a "substate"
+    for new_substate in data:
         state_key = tuple(cur_state)
         if state_key in matrix:
             state_matrix = matrix[state_key]
-            if state_new in state_matrix:
-                state_matrix[state_new] += 1
+            if new_substate in state_matrix:
+                state_matrix[new_substate] += 1
             else:
-                state_matrix[state_new] = 1
+                state_matrix[new_substate] = 1
         else:
             matrix[state_key] = {}
 
         cur_state = cur_state[1:]
-        cur_state.append(state_new)
+        cur_state.append(new_substate)
         # print cur_state
 
-    # Convert to probabilities
+    return matrix
+
+# Convert transition matrix to probabilities
+def to_probabilities(matrix):
     for state in matrix:
         state_matrix = matrix[state]
         total_transitions = sum(state_matrix.values())
         for st in state_matrix:
             state_transition = float(state_matrix[st])
             state_matrix[st] = state_transition / total_transitions
-
     return matrix
 
-
+# Run the Markov chain process to generate an output list
 def chain(transition_matrix, size):
-    tm = transition_matrix
-    cur_state = list(random.choice(list(tm.keys)))
-    result_arr = cur_state[:1]
-    for i in size:
-        result_arr += 
+    cur_state = list(random.choice(list(transition_matrix.keys())))
+    result_arr = cur_state[-1:]
+    for i in xrange(size):
+        next_state = choose_next(transition_matrix, tuple(cur_state))
+        # print next_state
+        result_arr += next_state
+        cur_state[-1] = next_state #update cur_state's last elm
+    return result_arr
 
+# Choose next state in transition matrix. Assumes matrix is NOT in probability-form
 def choose_next(transition_matrix, state):
-    if state not in transition_matrix:
-        print 'Error: state not in transition matrix'
+    # cur_state = list(state)
+    cur_state = state
+    # print cur_state
+    if cur_state not in transition_matrix:
+        # print 'Warning: state not in transition matrix'
+        return random.choice(list(transition_matrix.keys()))
     else:
-        
+        state_matrix = transition_matrix[cur_state]
+        if len(state_matrix) < 1: # no possible transitions
+            return random.choice(list(transition_matrix.keys()))
+        else:
+            # Create weighted state list
+            # e.g. state matrix {a:2, b: 3} -> [a,a,b,b,b]
+            weighted_state_arr = []
+            for sk in state_matrix:
+                sv = state_matrix[sk]
+                for i in xrange(sv):
+                    weighted_state_arr.append(sk)
+            # Choose a random new state
+            return random.choice(weighted_state_arr)
+
 
 
 
@@ -81,11 +105,18 @@ for i in xrange(SENTENCE_LENGTH):
     w = random.randint(0, len(words))
     sentence.append(words[w])
 
+print 'RANDOM GENERATION:'
 print ' '.join(sentence)
-
+print '\n'
 
 # Generation: markov
 matrix = transition_matrix(words, 10)
+# Print the transition matrix
 for k in matrix:
     if len(matrix[k]) > 0:
         print '{}: {}'.format(str(k), str(matrix[k]))
+
+# Sentence creation
+sentence = chain(matrix, 25)
+print 'MARKOV GENERATION:'
+print ' '.join(sentence)
