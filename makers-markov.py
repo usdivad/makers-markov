@@ -57,21 +57,28 @@ def to_probabilities(matrix):
 def chain(transition_matrix, size):
     # cur_state = list(choice(list(transition_matrix.keys())))
     cur_state = []
+    idx = 0
+    continue_chain = True
     deadend_transitions = 0
     prev_deadend = True
     cur_deadend = []
     longest_deadend = []
     deadend_counts = []
     deadends = []
-    # Prevent empty begin state (for strings only '')
     valid_state = False
+    
+    # Prevent empty begin state (for strings only '')
     while not valid_state:
         cur_state = list(choice(list(transition_matrix.keys())))
-        if not '' in cur_state:
+        if is_phrase_beginning(cur_state):
             valid_state = True
+        print 'retrying beginning'
     result_arr = cur_state[:]
     # print 'RESULT ARR: ' + str(result_arr)
-    for i in xrange(size-1):
+
+    # Chainin'
+    # for i in xrange(size-1):
+    while continue_chain:
         next_state, is_deadend = choose_next(transition_matrix, cur_state)
         
         # Collecting stats about dead ends
@@ -91,13 +98,18 @@ def chain(transition_matrix, size):
         cur_state = cur_state[1:]
         cur_state.append(next_state) #update cur_state's last elm
         # print str(i) + ': cur_state is ' + str(cur_state)
+
+        # See whether to continue or not
+        idx += 1
+        if idx >= size and is_phrase_end(cur_state[-1]):
+            continue_chain = False
     
     # Stats about process
     if len(cur_deadend) > len(longest_deadend):
         longest_deadend = cur_deadend
         deadend_counts.append(len(cur_deadend))
     print 'MARKOV PROCESS STATS:'
-    print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(size), str(100*float(deadend_transitions)/size))
+    print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(idx), str(100*float(deadend_transitions)/idx))
     print 'Dead-ends:\n\'' + ' ~~~ '.join(deadends) + '\''
     print 'Dead-end counts: ' + str(deadend_counts)
     print 'Longest consecutive dead-ends: {} ({})'.format(str(len(longest_deadend)), ' '.join(longest_deadend))
@@ -131,7 +143,8 @@ def choose_next(transition_matrix, state):
     # Choose a new state
     return (choice(weighted_state_arr), deadend_transition)
 
-def format_basic(result_arr):
+# Basic formatting for text output
+def format_text(result_arr):
     prev_word = 'Nothing'
     cur_word = ''
     formatted_result_arr = []
@@ -140,7 +153,7 @@ def format_basic(result_arr):
         # print result_arr[i] + ' vs ' + cur_word
         cur_word = result_arr[i]
         if cur_word != '':
-            if prev_word != '' and not re.match('\.|\?|\!', prev_word[-1]) == None:
+            if prev_word != '' and re.match('\.|\?|\!', prev_word[-1]) != None:
                 cur_word_arr = list(cur_word)
                 if len(cur_word_arr) > 0:
                     cur_word_arr[0] = cur_word_arr[0].upper()
@@ -154,12 +167,37 @@ def format_basic(result_arr):
         formatted_result_arr[-1] = last_word + '.'
     return formatted_result_arr
 
+# Check for end of phrase: only takes into account .?!
+def is_phrase_end(s):
+    if len(s) > 0 and re.match('\.|\?|\!', s[-1]) != None:
+        return True
+    else:
+        return False
+
+# Check for beginning of phrase: caps, numbers, non-words
+def is_phrase_beginning(s):
+    if len(s) > 0 and re.match('^[A-Z0-9\W]', s[0]) != None:
+        return True
+    else:
+        return False
+
+# Special Bible formatting
+# add newlines before numbers
+def format_bible(formatted_result_arr):
+    bible_result_arr = []
+    for i in xrange(len(formatted_result_arr)):
+        cur_word = formatted_result_arr[i]
+        if re.match('^\d+', cur_word) != None:
+            cur_word = '\n\n' + cur_word
+        bible_result_arr.append(cur_word)
+    return bible_result_arr
 
 # TESTS
 
 # Parse input into word array and frequency dict
-filename = 'knausgaard.txt'
-# filename = 'joyce.txt'
+# filename = 'txt/knausgaard.txt'
+# filename = 'txt/joyce.txt'
+filename = 'txt/kingjames.txt'
 word_freqs = {}
 words = []
 total_words = 0
@@ -176,7 +214,7 @@ with open(filename, 'r') as f:
 
 # Generation
 SENTENCE_LENGTH = 100
-MARKOV_ORDER = 3
+MARKOV_ORDER = 2
 sentence = []
 
 # Generation: random
@@ -185,7 +223,7 @@ for i in xrange(SENTENCE_LENGTH):
     # print len(words)
     # print w
     sentence.append(words[w])
-sentence = format_basic(sentence)
+sentence = format_text(sentence)
 print ''
 print 'RANDOM GENERATION:'
 print ' '.join(sentence)
@@ -200,7 +238,8 @@ matrix = transition_matrix(words, MARKOV_ORDER)
 
 # Sentence creation
 sentence = chain(matrix, SENTENCE_LENGTH)
-sentence = format_basic(sentence)
+sentence = format_text(sentence)
+sentence = format_bible(sentence)
 print 'MARKOV GENERATION:'
 print ' '.join(sentence)
 print ''
