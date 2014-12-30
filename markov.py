@@ -1,10 +1,12 @@
 from random import choice, randint
+import re
 
 '''
 
 data arr
 
 '''
+
 def transition_matrix(data, order):
     matrix = {}
     length = len(data)
@@ -19,7 +21,7 @@ def transition_matrix(data, order):
     # format: {(a,b,c): {'b': 48, 'a': 69}}
     # "new_substate" is actually a "substate"
     for new_substate in data:
-        print 'cur_state: {}, new_substate: {}'.format(str(cur_state), str(new_substate))
+        # print 'cur_state: {}, new_substate: {}'.format(str(cur_state), str(new_substate))
         state_key = tuple(cur_state)
         if state_key in matrix:
             state_matrix = matrix[state_key]
@@ -53,25 +55,34 @@ def to_probabilities(matrix):
 
 # Run the Markov chain process to generate an output list
 def chain(transition_matrix, size):
-    cur_state = list(choice(list(transition_matrix.keys())))
-    result_arr = cur_state
-    print 'RESULT ARR: ' + str(result_arr)
-    for i in xrange(size):
+    # cur_state = list(choice(list(transition_matrix.keys())))
+    cur_state = []
+
+    # Prevent empty begin state (for strings only '')
+    valid_state = False
+    while not valid_state:
+        cur_state = list(choice(list(transition_matrix.keys())))
+        if not '' in cur_state:
+            valid_state = True
+    result_arr = cur_state[:]
+    # print 'RESULT ARR: ' + str(result_arr)
+    for i in xrange(size-1):
         next_state = choose_next(transition_matrix, cur_state)
-        print 'next state: ' + str(next_state)
+        # print 'next state: ' + str(next_state)
         result_arr.append(next_state)
         # print result_arr
-        cur_state[-1] = next_state #update cur_state's last elm
+        cur_state = cur_state[1:]
+        cur_state.append(next_state) #update cur_state's last elm
+        print str(i) + ': cur_state is ' + str(cur_state)
     return result_arr
 
 # Choose next state in transition matrix. Assumes matrix is NOT in probability-form
 def choose_next(transition_matrix, state):
-    # cur_state = list(state)
     cur_state = tuple(state)
     # print cur_state
     state_matrix = {}
     if cur_state not in transition_matrix or len(transition_matrix[cur_state]) < 1:
-        print 'Warning: state {} not in transition matrix'.format(str(cur_state))
+        print 'WARNING: state {} is not in transition matrix'.format(str(cur_state))
         rand_state = choice(list(transition_matrix.keys()))
         state_matrix = transition_matrix[rand_state]
     else:
@@ -82,19 +93,37 @@ def choose_next(transition_matrix, state):
     weighted_state_arr = []
     for sk in state_matrix:
         sv = state_matrix[sk]
+        if float(sv) / sum(state_matrix.values()) == 1:
+            print 'WARNING: state {} can only transition to \'{}\'. Try using a smaller MARKOV_ORDER'.format(str(cur_state), str(sk))
         for i in xrange(sv):
-            print 'sk is ' + sk
+            # print 'sk is ' + sk
             weighted_state_arr.append(sk)
     # Choose a new state
-    print 'weighted_state_arr_' + str(weighted_state_arr)
     return choice(weighted_state_arr)
 
+def format_basic(result_arr):
+    prev_word = ''
+    cur_word = ''
+    for i in xrange(len(result_arr)):
+        cur_word = result_arr[i]
+        if prev_word != '' and not re.match('\.|\?|\!', prev_word[-1]) == None:
+            cur_word_arr = list(cur_word)
+            cur_word_arr[0] = cur_word_arr[0].upper()
+            cur_word = ''.join(cur_word_arr)
+            result_arr[i] = cur_word
+        prev_word = cur_word
+
+    result_arr[0] = result_arr[0].title()
+    last_word = result_arr[-1]
+    if re.match('\.|\?|\!', last_word[-1]) == None:
+        result_arr[-1] = last_word + '.'
+    return result_arr
 
 
 # TESTS
 
 # Parse input into word array and frequency dict
-filename = 'test_input.txt'
+filename = 'knausgaard.txt'
 word_freqs = {}
 words = []
 total_words = 0
@@ -110,8 +139,8 @@ with open(filename, 'r') as f:
                 word_freqs[word] = 1
 
 # Generation
-SENTENCE_LENGTH = 100
-MARKOV_ORDER = 1
+SENTENCE_LENGTH = 1000
+MARKOV_ORDER = 2
 sentence = []
 
 # Generation: random
@@ -120,19 +149,22 @@ for i in xrange(SENTENCE_LENGTH):
     # print len(words)
     # print w
     sentence.append(words[w])
-
-print 'GENERATION:'
+format_basic(sentence)
+print ''
+print 'RANDOM GENERATION:'
 print ' '.join(sentence)
-print '\n'
+print ''
 
 # Generation: markov
 matrix = transition_matrix(words, MARKOV_ORDER)
-# Print the transition matrix
-for k in to_probabilities(matrix):
-    # if len(matrix[k]) > 0:
-    print '{}: {}'.format(str(k), str(matrix[k]))
+# # Print the transition matrix
+# for k in to_probabilities(matrix):
+#     # if len(matrix[k]) > 0:
+#     print '{}: {}'.format(str(k), str(matrix[k]))
 
 # Sentence creation
-sentence = chain(matrix, int(SENTENCE_LENGTH/MARKOV_ORDER))
+sentence = chain(matrix, SENTENCE_LENGTH)
+format_basic(sentence)
 print 'MARKOV GENERATION:'
 print ' '.join(sentence)
+print ''
