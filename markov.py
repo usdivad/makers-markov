@@ -6,7 +6,6 @@ data arr
 
 '''
 def transition_matrix(data, order):
-
     matrix = {}
     length = len(data)
 
@@ -33,7 +32,30 @@ def transition_matrix(data, order):
         cur_state.append(state_new)
         # print cur_state
 
+    # Convert to probabilities
+    for state in matrix:
+        state_matrix = matrix[state]
+        total_transitions = sum(state_matrix.values())
+        for st in state_matrix:
+            state_transition = float(state_matrix[st])
+            state_matrix[st] = state_transition / total_transitions
+
     return matrix
+
+
+def chain(transition_matrix, size):
+    tm = transition_matrix
+    cur_state = list(random.choice(list(tm.keys)))
+    result_arr = cur_state[:1]
+    for i in size:
+        result_arr += 
+
+def choose_next(transition_matrix, state):
+    if state not in transition_matrix:
+        print 'Error: state not in transition matrix'
+    else:
+        
+
 
 
 # Parse input into word array and frequency dict
@@ -63,7 +85,7 @@ print ' '.join(sentence)
 
 
 # Generation: markov
-matrix = transition_matrix(words, 2)
+matrix = transition_matrix(words, 10)
 for k in matrix:
     if len(matrix[k]) > 0:
         print '{}: {}'.format(str(k), str(matrix[k]))
