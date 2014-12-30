@@ -57,7 +57,7 @@ def to_probabilities(matrix):
 def chain(transition_matrix, size):
     # cur_state = list(choice(list(transition_matrix.keys())))
     cur_state = []
-
+    solo_transitions = 0
     # Prevent empty begin state (for strings only '')
     valid_state = False
     while not valid_state:
@@ -67,17 +67,22 @@ def chain(transition_matrix, size):
     result_arr = cur_state[:]
     # print 'RESULT ARR: ' + str(result_arr)
     for i in xrange(size-1):
-        next_state = choose_next(transition_matrix, cur_state)
+        next_state, solo = choose_next(transition_matrix, cur_state)
+        if solo:
+            solo_transitions += 1
         # print 'next state: ' + str(next_state)
         result_arr.append(next_state)
         # print result_arr
         cur_state = cur_state[1:]
         cur_state.append(next_state) #update cur_state's last elm
         print str(i) + ': cur_state is ' + str(cur_state)
+    
+    print '{} solo/dead-end transitions out of {} states: {}%'.format(str(solo_transitions), str(size), str(100*float(solo_transitions)/size))
     return result_arr
 
 # Choose next state in transition matrix. Assumes matrix is NOT in probability-form
 def choose_next(transition_matrix, state):
+    solo_transition = False
     cur_state = tuple(state)
     # print cur_state
     state_matrix = {}
@@ -94,12 +99,13 @@ def choose_next(transition_matrix, state):
     for sk in state_matrix:
         sv = state_matrix[sk]
         if float(sv) / sum(state_matrix.values()) == 1:
+            solo_transition = True
             print 'WARNING: state {} can only transition to \'{}\'. Try using a smaller MARKOV_ORDER'.format(str(cur_state), str(sk))
         for i in xrange(sv):
             # print 'sk is ' + sk
             weighted_state_arr.append(sk)
     # Choose a new state
-    return choice(weighted_state_arr)
+    return (choice(weighted_state_arr), solo_transition)
 
 def format_basic(result_arr):
     prev_word = ''
