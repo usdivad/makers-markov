@@ -192,18 +192,38 @@ def format_bible(formatted_result_arr):
         bible_result_arr.append(cur_word)
     return bible_result_arr
 
+# Movie script formatting
+# add newlines after
+def format_script(formatted_result_arr):
+    script_result_arr = []
+    prev_word = ''
+    for i in xrange(len(formatted_result_arr)):
+        cur_word = formatted_result_arr[i]
+        # End of CAPPED PHRASE
+        if len(prev_word) > 1 and prev_word.upper() == prev_word and re.match('\W$', prev_word) == None and cur_word.upper() != cur_word:
+            print 'end capped: prev is {} and cur is {}'.format(prev_word, cur_word)
+            cur_word = '\n' + cur_word.title()
+        # Beginning of CAPPED PHRASE
+        elif (len(prev_word) <= 1 or (prev_word.upper() != prev_word and re.match('\d', prev_word) != None)) and re.match('\W', prev_word) != None and cur_word.upper() == cur_word:
+            print 'begin capped: prev is {} and cur is {}'.format(prev_word, cur_word)
+            cur_word = '\n\n' + cur_word 
+        script_result_arr.append(cur_word)
+        prev_word = cur_word
+    return script_result_arr
+
 # TESTS
 
 # Parse input into word array and frequency dict
 # filename = 'txt/knausgaard.txt'
-# filename = 'txt/joyce.txt'
-filename = 'txt/kingjames.txt'
+filename = 'txt/joyce.txt'
+# filename = 'txt/kingjames.txt'
 word_freqs = {}
 words = []
 total_words = 0
 with open(filename, 'r') as f:
     for line in f:
-        line_words = re.split('\s+', line)
+        # line_words = re.split('\s+', line)
+        line_words = re.split('\s+\w+\s+', line) #trying with charsize = 2
         for word in line_words:
             total_words += 1
             words.append(word)
@@ -214,7 +234,7 @@ with open(filename, 'r') as f:
 
 # Generation
 SENTENCE_LENGTH = 100
-MARKOV_ORDER = 2
+MARKOV_ORDER = 1
 sentence = []
 
 # Generation: random
@@ -239,7 +259,8 @@ matrix = transition_matrix(words, MARKOV_ORDER)
 # Sentence creation
 sentence = chain(matrix, SENTENCE_LENGTH)
 sentence = format_text(sentence)
-sentence = format_bible(sentence)
+# sentence = format_bible(sentence)
+# sentence = format_script(sentence)
 print 'MARKOV GENERATION:'
 print ' '.join(sentence)
 print ''
