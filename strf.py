@@ -74,3 +74,10 @@ def is_string_beginning(s):
         return True
     else:
         return False
+
+def is_bible_beginning(s):
+    if len(s) > 0 and re.match('\d+', s[0]) != None:
+        # print str(s[0]) + ' is beginning'
+        return True
+    else:
+        return False

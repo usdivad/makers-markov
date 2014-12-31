@@ -57,6 +57,7 @@ def chain(transition_matrix, size, is_sequence_beginning=truth, is_sequence_end=
     # Prevent empty begin state (for strings only '')
     while not valid_state:
         cur_state = list(choice(list(transition_matrix.keys())))
+        # print cur_state
         if is_sequence_beginning(cur_state):
             valid_state = True
         # print 'retrying beginning'

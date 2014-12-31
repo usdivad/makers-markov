@@ -35,14 +35,20 @@ with open(filename, 'r') as f:
 # Generation
 SENTENCE_LENGTH = 100
 MARKOV_ORDER = 2
-NUM_SENTENCES = 100
+NUM_SENTENCES = 1
 sentence = []
 original_sentences = []
 markov_sentences = []
 original_out = 'original_sentences.txt'
 markov_out = 'markov_sentences.txt'
+print_output = False
+game_mode = True
+score = 0
+total_iterations = 0
 
-for i in xrange(NUM_SENTENCES):
+print '\n\nWELCOME TO FINNEGANS FAKE!\n'
+# for sentence_number in xrange(NUM_SENTENCES):
+while game_mode:
     # Generation: subsequence of original 
     # Makes certain assumptions about the length of the text file
     offset = 0
@@ -87,12 +93,15 @@ for i in xrange(NUM_SENTENCES):
 
     # sentence = strf.format_text(sentence)
 
-    original_sentences.append(' '.join(sentence))
+    sentence_str = ' '.join(sentence)
+    original_sentences.append(sentence_str)
+    oss = sentence_str
 
-    # print ''
-    # print 'SUBSEQUENCE FROM ORIGINAL:'
-    # print ' '.join(sentence)
-    # print ''
+    if print_output:
+        print ''
+        print 'SUBSEQUENCE FROM ORIGINAL:'
+        print sentence_str
+        print ''
 
     # Generation: random
     # sentence = []
@@ -122,19 +131,47 @@ for i in xrange(NUM_SENTENCES):
     # sentence = strf.format_bible(sentence)
     # sentence = strf.format_script(sentence)
 
-    markov_sentences.append(' '.join(sentence))
 
-    # print 'MARKOV GENERATION:'
-    # print ' '.join(sentence)
-    # print ''
-
-    # print str(i) + 'th sequence done'
-
-with open(original_out, 'w') as f:
-    f.write(str(original_sentences))
-with open(markov_out, 'w') as f:
-    f.write(str(markov_sentences))
+    sentence_str = ' '.join(sentence)
+    markov_sentences.append(sentence_str)
+    mss = sentence_str
 
 
-    jiesu = time()
-    print 'Done in {} seconds'.format(str(jiesu-kaishi))
+    if print_output:
+        print 'MARKOV GENERATION:'
+        print sentence_str
+        print ''
+
+    # print 'Sequence #{} done'.format(str(sentence_number+1))
+
+    # Game time!
+    sentences = [oss, mss]
+    s1 = sentences.pop(randint(0, 1))
+    s2 = sentences.pop()
+    sentences = [oss, mss]
+    print 'Excerpt #1:\n{}\n\nExcerpt #2:\n{}\n'.format(s1, s2)
+    answer = raw_input('Which excerpt is from the real Finnegans Wake? (1 or 2)\n')
+    answer = int(answer) - 1
+    print answer
+    if sentences[answer] == oss:
+        print 'Correct!'
+        score += 1
+    else:
+        print 'Wrong!'
+
+    total_iterations += 1
+    print 'Your score is {}/{}.'.format(str(score), str(total_iterations))
+
+    game_mode = raw_input('Continue playing? (y/n)\n') == 'y'
+
+print 'Thanks for playing Finnegans Fake!'
+
+
+# with open(original_out, 'w') as f:
+#     f.write(str(original_sentences))
+# with open(markov_out, 'w') as f:
+#     f.write(str(markov_sentences))
+
+
+jiesu = time()
+print 'Done in {} seconds'.format(str(jiesu-kaishi))
