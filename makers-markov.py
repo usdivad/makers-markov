@@ -72,7 +72,7 @@ def chain(transition_matrix, size):
         cur_state = list(choice(list(transition_matrix.keys())))
         if is_phrase_beginning(cur_state):
             valid_state = True
-        print 'retrying beginning'
+        # print 'retrying beginning'
     result_arr = cur_state[:]
     # print 'RESULT ARR: ' + str(result_arr)
 
@@ -108,12 +108,12 @@ def chain(transition_matrix, size):
     if len(cur_deadend) > len(longest_deadend):
         longest_deadend = cur_deadend
         deadend_counts.append(len(cur_deadend))
-    print 'MARKOV PROCESS STATS:'
-    print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(idx), str(100*float(deadend_transitions)/idx))
-    print 'Dead-ends:\n\'' + ' ~~~ '.join(deadends) + '\''
-    print 'Dead-end counts: ' + str(deadend_counts)
-    print 'Longest consecutive dead-ends: {} ({})'.format(str(len(longest_deadend)), ' '.join(longest_deadend))
-    print ''
+    # print 'MARKOV PROCESS STATS:'
+    # print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(idx), str(100*float(deadend_transitions)/idx))
+    # print 'Dead-ends:\n\'' + ' ~~~ '.join(deadends) + '\''
+    # print 'Dead-end counts: ' + str(deadend_counts)
+    # print 'Longest consecutive dead-ends: {} ({})'.format(str(len(longest_deadend)), ' '.join(longest_deadend))
+    # print ''
     return result_arr
 
 # Choose next state in transition matrix. Assumes matrix is NOT in probability-form
@@ -153,7 +153,9 @@ def format_text(result_arr):
         # print result_arr[i] + ' vs ' + cur_word
         cur_word = result_arr[i]
         if cur_word != '':
-            if prev_word != '' and re.match('\.|\?|\!', prev_word[-1]) != None:
+            # re_punctuation = re.compile(r'\.|\?|\!')
+            re_punctuation = re.compile(r'\W$')
+            if prev_word != '' and re.match(re_punctuation, prev_word) != None:
                 cur_word_arr = list(cur_word)
                 if len(cur_word_arr) > 0:
                     cur_word_arr[0] = cur_word_arr[0].upper()
@@ -176,7 +178,7 @@ def is_phrase_end(s):
 
 # Check for beginning of phrase: caps, numbers, non-words
 def is_phrase_beginning(s):
-    if len(s) > 0 and re.match('^[A-Z0-9\W]', s[0]) != None:
+    if len(s) > 0 and s != ' ' and re.match('^[A-Z0-9\W]', s[0]) != None:
         return True
     else:
         return False
@@ -222,8 +224,8 @@ words = []
 total_words = 0
 with open(filename, 'r') as f:
     for line in f:
-        # line_words = re.split('\s+', line)
-        line_words = re.split('\s+\w+\s+', line) #trying with charsize = 2
+        line_words = re.split('\s+', line)
+        # line_words = re.split('\s+\w+\s+', line) #trying with charsize = 2
         for word in line_words:
             total_words += 1
             words.append(word)
@@ -233,23 +235,65 @@ with open(filename, 'r') as f:
                 word_freqs[word] = 1
 
 # Generation
-SENTENCE_LENGTH = 100
-MARKOV_ORDER = 1
+SENTENCE_LENGTH = 7
+MARKOV_ORDER = 2
 sentence = []
 
-# Generation: random
-for i in xrange(SENTENCE_LENGTH):
-    w = randint(0, len(words)-1)
-    # print len(words)
-    # print w
-    sentence.append(words[w])
-sentence = format_text(sentence)
+# Generation: subsequence of original 
+# Makes certain assumptions about the length of the text file
+offset = 0
+original_idx = 0
+continue_original = True
+valid_beginning = False
+while not valid_beginning:
+    offset = randint(0, len(words)/2)
+    original_idx = offset
+    word = words[original_idx]
+    if is_phrase_beginning(word):
+        valid_beginning = True
+        # sentence.append(word)
+        # print word + ' is a valid beginning'
+
+while continue_original:
+    # print 'idx: {}, offset: {}, max: {}'.format(str(original_idx), str(offset), str(offset+SENTENCE_LENGTH))
+    word = words[original_idx]
+    if word != '' and word != ' ':
+        sentence.append(word)
+    original_idx += 1
+    if original_idx >= offset+SENTENCE_LENGTH:
+        try:
+            if is_phrase_end(word[-1]):
+                # print word + ' is ending'
+                # print 'DONE'
+                continue_original = False
+            # else:
+            #     print word + ' is not a phrase end'
+        except:
+            print 'ran to the end of the file!'
+            break
+    # original_idx += 1
+
+# sentence = format_text(sentence)
 print ''
-print 'RANDOM GENERATION:'
+print 'SUBSEQUENCE FROM ORIGINAL:'
 print ' '.join(sentence)
 print ''
 
+# Generation: random
+# sentence = []
+# for i in xrange(SENTENCE_LENGTH):
+#     w = randint(0, len(words)-1)
+#     # print len(words)
+#     # print w
+#     sentence.append(words[w])
+# # sentence = format_text(sentence)
+# print ''
+# print 'RANDOM GENERATION:'
+# print ' '.join(sentence)
+# print ''
+
 # Generation: markov
+sentence = []
 matrix = transition_matrix(words, MARKOV_ORDER)
 # # Print the transition matrix
 # for k in to_probabilities(matrix):
@@ -258,7 +302,7 @@ matrix = transition_matrix(words, MARKOV_ORDER)
 
 # Sentence creation
 sentence = chain(matrix, SENTENCE_LENGTH)
-sentence = format_text(sentence)
+# sentence = format_text(sentence)
 # sentence = format_bible(sentence)
 # sentence = format_script(sentence)
 print 'MARKOV GENERATION:'
