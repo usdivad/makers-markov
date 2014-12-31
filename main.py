@@ -28,7 +28,7 @@ with open(filename, 'r') as f:
                 word_freqs[word] = 1
 
 # Generation
-SENTENCE_LENGTH = 7
+SENTENCE_LENGTH = 100
 MARKOV_ORDER = 2
 sentence = []
 
@@ -38,33 +38,41 @@ offset = 0
 original_idx = 0
 continue_original = True
 valid_beginning = False
-while not valid_beginning:
-    offset = randint(0, len(words)/2)
-    original_idx = offset
-    word = words[original_idx]
-    if strf.is_string_beginning(word):
-        valid_beginning = True
-        # sentence.append(word)
-        # print word + ' is a valid beginning'
 
-while continue_original:
-    # print 'idx: {}, offset: {}, max: {}'.format(str(original_idx), str(offset), str(offset+SENTENCE_LENGTH))
-    word = words[original_idx]
-    if word != '' and word != ' ':
-        sentence.append(word)
-    original_idx += 1
-    if original_idx >= offset+SENTENCE_LENGTH:
-        try:
-            if strf.is_string_end(word[-1]):
-                # print word + ' is ending'
-                # print 'DONE'
-                continue_original = False
-            # else:
-            #     print word + ' is not a phrase end'
-        except:
-            print 'ran to the end of the file!'
-            break
-    # original_idx += 1
+# Simple, no begin/end checks
+offset = randint(0, len(words)/2)
+for i in xrange(SENTENCE_LENGTH):
+    idx = offset+i
+    sentence.append(words[idx])
+
+# # With begin/end checks
+# while not valid_beginning:
+#     offset = randint(0, len(words)/2)
+#     original_idx = offset
+#     word = words[original_idx]
+#     if strf.is_string_beginning(word):
+#         valid_beginning = True
+#         # sentence.append(word)
+#         # print word + ' is a valid beginning'
+
+# while continue_original:
+#     # print 'idx: {}, offset: {}, max: {}'.format(str(original_idx), str(offset), str(offset+SENTENCE_LENGTH))
+#     word = words[original_idx]
+#     if word != '' and word != ' ':
+#         sentence.append(word)
+#     original_idx += 1
+#     if original_idx >= offset+SENTENCE_LENGTH:
+#         try:
+#             if strf.is_string_end(word[-1]):
+#                 # print word + ' is ending'
+#                 # print 'DONE'
+#                 continue_original = False
+#             # else:
+#             #     print word + ' is not a phrase end'
+#         except:
+#             print 'ran to the end of the file!'
+#             break
+#     # original_idx += 1
 
 # sentence = strf.format_text(sentence)
 print ''
@@ -94,7 +102,8 @@ matrix = mm.transition_matrix(words, MARKOV_ORDER)
 #     print '{}: {}'.format(str(k), str(matrix[k]))
 
 # Sentence creation
-sentence = mm.chain(matrix, SENTENCE_LENGTH, is_sequence_beginning=strf.is_string_beginning, is_sequence_end=strf.is_string_end)
+# sentence = mm.chain(matrix, SENTENCE_LENGTH, is_sequence_beginning=strf.is_string_beginning, is_sequence_end=strf.is_string_end)
+sentence = mm.chain(matrix, SENTENCE_LENGTH)
 # sentence = strf.format_text(sentence)
 # sentence = strf.format_bible(sentence)
 # sentence = strf.format_script(sentence)

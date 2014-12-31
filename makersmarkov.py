@@ -1,11 +1,9 @@
-from random import choice, randint
-import re
-
 '''
 
-data arr
+Higher-order Markov chain implementation
 
 '''
+from random import choice
 
 def transition_matrix(data, order):
     matrix = {}
@@ -38,23 +36,12 @@ def transition_matrix(data, order):
 
     return matrix
 
-# Convert transition matrix to probabilities
-def to_probabilities(matrix):
-    new_matrix = {}
-    for state in matrix:
-        state_matrix = matrix[state]
-        total_transitions = sum(state_matrix.values())
-        for st in state_matrix:
-            state_transition = float(state_matrix[st])
-            prb = state_transition / total_transitions
-            if state in new_matrix:
-                new_matrix[state][st] = prb
-            else:
-                new_matrix[state] = {st: prb}
-    return new_matrix
+
+def truth(x):
+    return True
 
 # Run the Markov chain process to generate an output list
-def chain(transition_matrix, size):
+def chain(transition_matrix, size, is_sequence_beginning=truth, is_sequence_end=truth):
     # cur_state = list(choice(list(transition_matrix.keys())))
     cur_state = []
     idx = 0
@@ -70,7 +57,7 @@ def chain(transition_matrix, size):
     # Prevent empty begin state (for strings only '')
     while not valid_state:
         cur_state = list(choice(list(transition_matrix.keys())))
-        if is_phrase_beginning(cur_state):
+        if is_sequence_beginning(cur_state):
             valid_state = True
         # print 'retrying beginning'
     result_arr = cur_state[:]
@@ -101,7 +88,7 @@ def chain(transition_matrix, size):
 
         # See whether to continue or not
         idx += 1
-        if idx >= size and is_phrase_end(cur_state[-1]):
+        if idx >= size and is_sequence_end(cur_state[-1]):
             continue_chain = False
     
     # Stats about process
@@ -143,168 +130,18 @@ def choose_next(transition_matrix, state):
     # Choose a new state
     return (choice(weighted_state_arr), deadend_transition)
 
-# Basic formatting for text output
-def format_text(result_arr):
-    prev_word = 'Nothing'
-    cur_word = ''
-    formatted_result_arr = []
-    for i in xrange(len(result_arr)):
-        # cur_word = re.sub(r'\s+', ' ', result_arr[i])
-        # print result_arr[i] + ' vs ' + cur_word
-        cur_word = result_arr[i]
-        if cur_word != '':
-            # re_punctuation = re.compile(r'\.|\?|\!')
-            re_punctuation = re.compile(r'\W$')
-            if prev_word != '' and re.match(re_punctuation, prev_word) != None:
-                cur_word_arr = list(cur_word)
-                if len(cur_word_arr) > 0:
-                    cur_word_arr[0] = cur_word_arr[0].upper()
-                    cur_word = ''.join(cur_word_arr)
-            formatted_result_arr.append(cur_word)
-            prev_word = cur_word
 
-    formatted_result_arr[0] = formatted_result_arr[0].title()
-    last_word = formatted_result_arr[-1]
-    if len(last_word) > 0 and re.match('\.|\?|\!', last_word[-1]) == None:
-        formatted_result_arr[-1] = last_word + '.'
-    return formatted_result_arr
-
-# Check for end of phrase: only takes into account .?!
-def is_phrase_end(s):
-    if len(s) > 0 and re.match('\.|\?|\!', s[-1]) != None:
-        return True
-    else:
-        return False
-
-# Check for beginning of phrase: caps, numbers, non-words
-def is_phrase_beginning(s):
-    if len(s) > 0 and s != ' ' and re.match('^[A-Z0-9\W]', s[0]) != None:
-        return True
-    else:
-        return False
-
-# Special Bible formatting
-# add newlines before numbers
-def format_bible(formatted_result_arr):
-    bible_result_arr = []
-    for i in xrange(len(formatted_result_arr)):
-        cur_word = formatted_result_arr[i]
-        if re.match('^\d+', cur_word) != None:
-            cur_word = '\n\n' + cur_word
-        bible_result_arr.append(cur_word)
-    return bible_result_arr
-
-# Movie script formatting
-# add newlines after
-def format_script(formatted_result_arr):
-    script_result_arr = []
-    prev_word = ''
-    for i in xrange(len(formatted_result_arr)):
-        cur_word = formatted_result_arr[i]
-        # End of CAPPED PHRASE
-        if len(prev_word) > 1 and prev_word.upper() == prev_word and re.match('\W$', prev_word) == None and cur_word.upper() != cur_word:
-            print 'end capped: prev is {} and cur is {}'.format(prev_word, cur_word)
-            cur_word = '\n' + cur_word.title()
-        # Beginning of CAPPED PHRASE
-        elif (len(prev_word) <= 1 or (prev_word.upper() != prev_word and re.match('\d', prev_word) != None)) and re.match('\W', prev_word) != None and cur_word.upper() == cur_word:
-            print 'begin capped: prev is {} and cur is {}'.format(prev_word, cur_word)
-            cur_word = '\n\n' + cur_word 
-        script_result_arr.append(cur_word)
-        prev_word = cur_word
-    return script_result_arr
-
-# TESTS
-
-# Parse input into word array and frequency dict
-# filename = 'txt/knausgaard.txt'
-filename = 'txt/joyce.txt'
-# filename = 'txt/kingjames.txt'
-word_freqs = {}
-words = []
-total_words = 0
-with open(filename, 'r') as f:
-    for line in f:
-        line_words = re.split('\s+', line)
-        # line_words = re.split('\s+\w+\s+', line) #trying with charsize = 2
-        for word in line_words:
-            total_words += 1
-            words.append(word)
-            if word in word_freqs:
-                word_freqs[word] += 1
+# Convert transition matrix to probabilities
+def to_probabilities(matrix):
+    new_matrix = {}
+    for state in matrix:
+        state_matrix = matrix[state]
+        total_transitions = sum(state_matrix.values())
+        for st in state_matrix:
+            state_transition = float(state_matrix[st])
+            prb = state_transition / total_transitions
+            if state in new_matrix:
+                new_matrix[state][st] = prb
             else:
-                word_freqs[word] = 1
-
-# Generation
-SENTENCE_LENGTH = 7
-MARKOV_ORDER = 2
-sentence = []
-
-# Generation: subsequence of original 
-# Makes certain assumptions about the length of the text file
-offset = 0
-original_idx = 0
-continue_original = True
-valid_beginning = False
-while not valid_beginning:
-    offset = randint(0, len(words)/2)
-    original_idx = offset
-    word = words[original_idx]
-    if is_phrase_beginning(word):
-        valid_beginning = True
-        # sentence.append(word)
-        # print word + ' is a valid beginning'
-
-while continue_original:
-    # print 'idx: {}, offset: {}, max: {}'.format(str(original_idx), str(offset), str(offset+SENTENCE_LENGTH))
-    word = words[original_idx]
-    if word != '' and word != ' ':
-        sentence.append(word)
-    original_idx += 1
-    if original_idx >= offset+SENTENCE_LENGTH:
-        try:
-            if is_phrase_end(word[-1]):
-                # print word + ' is ending'
-                # print 'DONE'
-                continue_original = False
-            # else:
-            #     print word + ' is not a phrase end'
-        except:
-            print 'ran to the end of the file!'
-            break
-    # original_idx += 1
-
-# sentence = format_text(sentence)
-print ''
-print 'SUBSEQUENCE FROM ORIGINAL:'
-print ' '.join(sentence)
-print ''
-
-# Generation: random
-# sentence = []
-# for i in xrange(SENTENCE_LENGTH):
-#     w = randint(0, len(words)-1)
-#     # print len(words)
-#     # print w
-#     sentence.append(words[w])
-# # sentence = format_text(sentence)
-# print ''
-# print 'RANDOM GENERATION:'
-# print ' '.join(sentence)
-# print ''
-
-# Generation: markov
-sentence = []
-matrix = transition_matrix(words, MARKOV_ORDER)
-# # Print the transition matrix
-# for k in to_probabilities(matrix):
-#     # if len(matrix[k]) > 0:
-#     print '{}: {}'.format(str(k), str(matrix[k]))
-
-# Sentence creation
-sentence = chain(matrix, SENTENCE_LENGTH)
-# sentence = format_text(sentence)
-# sentence = format_bible(sentence)
-# sentence = format_script(sentence)
-print 'MARKOV GENERATION:'
-print ' '.join(sentence)
-print ''
+                new_matrix[state] = {st: prb}
+    return new_matrix
