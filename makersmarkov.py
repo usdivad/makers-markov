@@ -5,6 +5,8 @@ Higher-order Markov chain implementation
 '''
 from random import choice
 
+
+# Create a pseudo transition matrix (actually nested dicts) from list data and int order.
 def transition_matrix(data, order):
     matrix = {}
     length = len(data)
@@ -96,12 +98,12 @@ def chain(transition_matrix, size, is_sequence_beginning=truth, is_sequence_end=
     if len(cur_deadend) > len(longest_deadend):
         longest_deadend = cur_deadend
         deadend_counts.append(len(cur_deadend))
-    # print 'MARKOV PROCESS STATS:'
-    # print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(idx), str(100*float(deadend_transitions)/idx))
-    # print 'Dead-ends:\n\'' + ' ~~~ '.join(deadends) + '\''
-    # print 'Dead-end counts: ' + str(deadend_counts)
-    # print 'Longest consecutive dead-ends: {} ({})'.format(str(len(longest_deadend)), ' '.join(longest_deadend))
-    # print ''
+    print 'MARKOV PROCESS STATS:'
+    print '{} dead-end transitions out of {} states: {}%'.format(str(deadend_transitions), str(idx), str(100*float(deadend_transitions)/idx))
+    print 'Dead-ends:\n\'' + ' ~~~ '.join(deadends) + '\''
+    print 'Dead-end counts: ' + str(deadend_counts)
+    print 'Longest consecutive dead-ends: {} ({})'.format(str(len(longest_deadend)), ' '.join(longest_deadend))
+    print ''
     return result_arr
 
 # Choose next state in transition matrix. Assumes matrix is NOT in probability-form
