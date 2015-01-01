@@ -15,9 +15,7 @@ kaishi = time()
 
 # TESTS
 # Parse input into word array and frequency dict
-# filename = 'txt/knausgaard.txt'
-# filename = 'txt/joyce.txt'
-filename = 'txt/kingjames.txt'
+filename = 'txt/knausgaard.txt'
 word_freqs = {}
 words = []
 total_words = 0
@@ -35,6 +33,7 @@ with open(filename, 'r') as f:
 
 # Generation
 SENTENCE_LENGTH = 100
+NUM_SENTENCES = 100
 MARKOV_ORDER = 2
 sentence = []
 
@@ -56,7 +55,7 @@ while not valid_beginning:
     original_idx = offset
     word = words[original_idx]
     # if strf.is_string_beginning(word):
-    if strf.is_bible_beginning(word):
+    if strf.is_string_beginning(word):
         valid_beginning = True
         # sentence.append(word)
         # print word + ' is a valid beginning'
@@ -81,7 +80,7 @@ while continue_original:
     # original_idx += 1
 
 sentence = strf.format_text(sentence)
-sentence = strf.format_bible(sentence)
+# sentence = strf.format_bible(sentence)
 
 sentence_str = ' '.join(sentence)
 
@@ -98,7 +97,7 @@ for i in xrange(SENTENCE_LENGTH):
     # print w
     sentence.append(words[w])
 sentence = strf.format_text(sentence)
-sentence = strf.format_bible(sentence)
+
 print ''
 print 'RANDOM GENERATION:'
 print ' '.join(sentence)
@@ -114,11 +113,11 @@ matrix = mm.transition_matrix(words, MARKOV_ORDER)
 #     print '{}: {}'.format(str(k), str(matrix[k]))
 
 # Sentence creation
-sentence = mm.chain(matrix, SENTENCE_LENGTH, is_sequence_beginning=strf.is_bible_beginning, is_sequence_end=strf.is_string_end)
+sentence = mm.chain(matrix, SENTENCE_LENGTH, is_sequence_beginning=strf.is_string_beginning, is_sequence_end=strf.is_string_end)
 # sentence = mm.chain(matrix, SENTENCE_LENGTH, is_sequence_beginning=strf.is_string_beginning, is_sequence_end=strf.is_string_end)
 # sentence = mm.chain(matrix, SENTENCE_LENGTH)
 sentence = strf.format_text(sentence)
-sentence = strf.format_bible(sentence)
+# sentence = strf.format_bible(sentence)
 # sentence = strf.format_script(sentence)
 
 sentence_str = ' '.join(sentence)
